@@ -51,9 +51,9 @@ tests.test_load_vgg(load_vgg, tf)
 def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     """
     Create the layers for a fully convolutional network.  Build skip-layers using the vgg layers.
-    :param vgg_layer7_out: TF Tensor for VGG Layer 3 output
+    :param vgg_layer3_out: TF Tensor for VGG Layer 3 output
     :param vgg_layer4_out: TF Tensor for VGG Layer 4 output
-    :param vgg_layer3_out: TF Tensor for VGG Layer 7 output
+    :param vgg_layer7_out: TF Tensor for VGG Layer 7 output
     :param num_classes: Number of classes to classify
     :return: The Tensor for the last layer of output
     """
@@ -80,7 +80,7 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     output = tf.add(output, conv3)
 
     # Increase the size back to the original image resolution
-    output = tf.layers.conv2d_transpose(output, num_classes, 18, 8, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    output = tf.layers.conv2d_transpose(output, num_classes, 16, 8, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
 
     return output
 tests.test_layers(layers)
@@ -136,8 +136,8 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
             # Do training
             sess.run(train_op, feed_dict={input_image: image, correct_label: label, keep_prob: 0.8, learning_rate: 0.001})
 
-        # Report cross entropy at the end of each epoch
-        print('Epoch {0} cross entropy: {1}'.format(epoch, sess.run(cross_entropy_loss, feed_dict={input_image: image, correct_label: label, keep_prob: 0.8, learning_rate: 0.001})))
+            # Report cross entropy at the end of each epoch
+            print('Epoch {0} cross entropy: {1}'.format(epoch, sess.run(cross_entropy_loss, feed_dict={input_image: image, correct_label: label, keep_prob: 1.0})))
 tests.test_train_nn(train_nn)
 
 
@@ -148,7 +148,7 @@ def run():
     runs_dir = './runs'
     tests.test_for_kitti_dataset(data_dir)
     epochs = 6
-    batch_size = 180
+    batch_size = 1
 
     # Download pretrained vgg model
     helper.maybe_download_pretrained_vgg(data_dir)
@@ -158,8 +158,10 @@ def run():
     #  https://www.cityscapes-dataset.com/
 
     with tf.Session() as sess:
+
         # Path to vgg model
         vgg_path = os.path.join(data_dir, 'vgg')
+
         # Create function to get batches
         get_batches_fn = helper.gen_batch_function(os.path.join(data_dir, 'data_road/training'), image_shape)
 
@@ -168,20 +170,21 @@ def run():
 
         # Tensorflow placeholders
         input_image = tf.placeholder(tf.int32, [None, 160, 576, 3])
+        keep_prob = tf.placeholder(tf.float32)
         correct_label = tf.placeholder(tf.int32, [None, 160, 576, 2])
         learning_rate = tf.placeholder(tf.float32)
-        keep_prob = tf.placeholder(tf.float32)
 
         # Build NN using load_vgg, layers, and optimize function
-        layer_input, layer_keep, layer_3, layer_4, layer_7 = load_vgg(sess, vgg_path)
+        input_image, keep_prob, layer_3, layer_4, layer_7 = load_vgg(sess, vgg_path)
         layers_output = layers(layer_3, layer_4, layer_7, num_classes)
         logits, train_op, cross_entropy_loss = optimize(layers_output, correct_label, learning_rate, num_classes)
 
         # Train NN using the train_nn function
+        sess.run(tf.global_variables_initializer())
         train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_loss, input_image,
                  correct_label, keep_prob, learning_rate)
 
-        # TODO: Save inference data using helper.save_inference_samples
+        # Save inference data using helper.save_inference_samples
         helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
 
         # OPTIONAL: Apply the trained model to a video
