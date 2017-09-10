@@ -128,8 +128,16 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     :param keep_prob: TF Placeholder for dropout keep probability
     :param learning_rate: TF Placeholder for learning rate
     """
-    # TODO: Implement function
-    pass
+    
+    # Retrive training data for each batch
+    for epoch in range(epochs):
+    	for image, label in get_batches_fn(batch_size):
+
+    		# Do training
+    		sess.run(train_op, feed_dict={input_image: image, correct_label: label, keep_prob: 0.8, learning_rate: 0.001})
+
+    	# Report cross entropy at the end of each epoch
+    	print('Epoch {0} cross entropy: {1}'.format(epoch, sess.run(cross_entropy_loss, feed_dict={input_image: image, correct_label: label, keep_prob: 0.8, learning_rate: 0.001})))
 tests.test_train_nn(train_nn)
 
 
