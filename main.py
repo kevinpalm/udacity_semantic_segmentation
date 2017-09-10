@@ -136,8 +136,8 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
             # Do training
             sess.run(train_op, feed_dict={input_image: image, correct_label: label, keep_prob: 0.8, learning_rate: 0.001})
 
-            # Report cross entropy at the end of each epoch
-            print('Epoch {0} cross entropy: {1}'.format(epoch, sess.run(cross_entropy_loss, feed_dict={input_image: image, correct_label: label, keep_prob: 1.0})))
+        # Report cross entropy at the end of each epoch
+        print('Epoch {0} cross entropy: {1}'.format(epoch, sess.run(cross_entropy_loss, feed_dict={input_image: image, correct_label: label, keep_prob: 1.0})))
 tests.test_train_nn(train_nn)
 
 
@@ -148,7 +148,7 @@ def run():
     runs_dir = './runs'
     tests.test_for_kitti_dataset(data_dir)
     epochs = 6
-    batch_size = 1
+    batch_size = 12
 
     # Download pretrained vgg model
     helper.maybe_download_pretrained_vgg(data_dir)
