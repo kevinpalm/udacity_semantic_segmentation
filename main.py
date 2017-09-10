@@ -24,8 +24,6 @@ def load_vgg(sess, vgg_path):
     :param vgg_path: Path to vgg folder, containing "variables/" and "saved_model.pb"
     :return: Tuple of Tensors from VGG model (image_input, keep_prob, layer3_out, layer4_out, layer7_out)
     """
-    # TODO: Implement function
-    #   Use tf.saved_model.loader.load to load the model and weights
 
     # Names of VGG layers and the model tag
     vgg_tag = 'vgg16'
@@ -59,8 +57,32 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     :param num_classes: Number of classes to classify
     :return: The Tensor for the last layer of output
     """
-    # TODO: Implement function
-    return None
+
+    # Replace fully connected layer with a 1x1 convolution
+    conv1 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    # Increase the size of the 1x1 conv output to match the size of the layer 4 output
+    output = tf.layers.conv2d_transpose(conv1, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    # Use a 1x1 conv to match vgg layer 4 to the same number of classes
+    conv2 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    # Add in layer 4 values (skip connection)
+    output = tf.add(output, conv2)
+
+    # Increase the size to match layer 3
+    output = tf.layers.conv2d_transpose(output, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    # Use a 1x1 conv to match vgg layer 3 to the same number of classes
+    conv3 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    # Add in layer 3 values (another skip connection)
+    output = tf.add(output, conv3)
+
+    # Increase the size back to the original image resolution
+    output = tf.layers.conv2d_transpose(output, num_classes, 18, 8, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    return output
 tests.test_layers(layers)
 
 
