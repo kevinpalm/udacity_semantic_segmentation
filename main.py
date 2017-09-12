@@ -59,28 +59,28 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     """
 
     # Replace fully connected layer with a 1x1 convolution
-    conv1 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.contrib.layers.xavier_initializer())
+    conv1 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     # Increase the size of the 1x1 conv output to match the size of the layer 4 output
-    output = tf.layers.conv2d_transpose(conv1, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.contrib.layers.xavier_initializer())
+    output = tf.layers.conv2d_transpose(conv1, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     # Use a 1x1 conv to match vgg layer 4 to the same number of classes
-    conv2 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.contrib.layers.xavier_initializer())
+    conv2 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     # Add in layer 4 values (skip connection)
     output = tf.add(output, conv2)
 
     # Increase the size to match layer 3
-    output = tf.layers.conv2d_transpose(output, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.contrib.layers.xavier_initializer())
+    output = tf.layers.conv2d_transpose(output, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     # Use a 1x1 conv to match vgg layer 3 to the same number of classes
-    conv3 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.contrib.layers.xavier_initializer())
+    conv3 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     # Add in layer 3 values (another skip connection)
     output = tf.add(output, conv3)
 
     # Increase the size back to the original image resolution
-    output = tf.layers.conv2d_transpose(output, num_classes, 16, 8, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.contrib.layers.xavier_initializer())
+    output = tf.layers.conv2d_transpose(output, num_classes, 16, 8, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     return output
 tests.test_layers(layers)
@@ -147,7 +147,7 @@ def run():
     data_dir = './data'
     runs_dir = './runs'
     tests.test_for_kitti_dataset(data_dir)
-    epochs = 12
+    epochs = 22
     batch_size = 2
 
     # Download pretrained vgg model
